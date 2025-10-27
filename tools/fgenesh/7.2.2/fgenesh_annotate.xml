@@ -16,29 +16,33 @@
 	    ### cat seqlit - data preparation  &&
 	    #if $inputs.input_type == 'single':
 	    	#for $input in $inputs.single_seq
-	    	   ln -fs '$input' $input.element_identifier &&
-	    	   echo `pwd`/$input.element_identifier >> seqlist &&
-		   echo `pwd`/$input.element_identifier > '$input.element_identifier'.list &&
+		   #set $identifier = re.sub('[^\w\-_\.]', '_', $input.element_identifier)
+	    	   ln -fs '$input' '${identifier}' &&
+	    	   echo `pwd`/'${identifier}' >> seqlist &&
+	    	   echo `pwd`/'${identifier}' > '${identifier}'.list &&
 	    	#end for
 		sort seqlist > sorted_seqlist &&
 	    	#if $repeat_sequence.selector == 'single_masked_seq':
-		   #for $seq in $repeat_sequence.masked_seq_single
-	    		ln -fs '$seq' $seq.element_identifier &&
-	    		echo `pwd`/$seq.element_identifier >> seqlistN && 
-			echo `pwd`/$seq.element_identifier > '$seq.element_identifier'.list &&
+	    	#for $seq in $repeat_sequence.masked_seq_single
+			#set $identifier = re.sub('[^\w\-_\.]', '_', $seq.element_identifier)
+	    		ln -fs '$seq' '${identifier}' &&
+	    		echo `pwd`/'${identifier}' >> seqlistN && 
+	    		echo `pwd`/'${identifier}' > '${identifier}'.list &&
 	    	#end for
 		sort seqlistN > sorted_seqlistN &&
 		#end if
 	    #elif $inputs.input_type == 'multiple':
 	    	#for $i,$input in enumerate($inputs.multiple_seq)
-	    	    ln -fs '$input' $input.element_identifier &&
-	    	    echo `pwd`/$input.element_identifier >> seqlist && 
-		    echo `pwd`/$input.element_identifier > '$input.element_identifier'.list &&
+		    #set $identifier = re.sub('[^\w\-_\.]', '_', $input.element_identifier)
+	    	    ln -fs '$input' '${identifier}' &&
+	    	    echo `pwd`/'${identifier}' >> seqlist && 
+	    	    echo `pwd`/'${identifier}' > '${identifier}'.list &&
 	    	#end for
                 #if $repeat_sequence.selector == 'multiple_masked_seq':
-                   #for $e,$mseq in enumerate($repeat_sequence.masked_seq_multiple)
-                        ln -fs '$mseq' $mseq.element_identifier &&
-	    		echo `pwd`/$mseq.element_identifier >> seqlistN_temp && 
+	    	#for $e,$mseq in enumerate($repeat_sequence.masked_seq_multiple)
+			#set $identifier = re.sub('[^\w\-_\.]', '_', $mseq.element_identifier)
+	    		ln -fs '$mseq' '${identifier}' &&
+	    		echo `pwd`/'${identifier}' >> seqlistN_temp && 
 	    		paste seqlistN_temp seqlist | sort | cut -f1 > seqlistN && #### sort the filename in the seqlistN file to maintain the same order as the filename in seqlist file
 			### prep fo parallel command
 	    		echo `pwd`/$mseq.element_identifier > '$mseq.element_identifier'.list &&
