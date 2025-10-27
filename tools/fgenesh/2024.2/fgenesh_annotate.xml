@@ -17,8 +17,9 @@
 
 	    #if str($use_expression.type) == "2":
 	    	mkdir -p read_dir &&
-	        #for $input_file in $use_expression.read_directory:
-            		ln -s '${input_file}' 'read_dir/${input_file.element_identifier}' &&
+	    	#for $input_file in $use_expression.read_directory:
+			#set $identifier = re.sub('[^\w\-_\.]', '_', $input_file.element_identifier)
+            		ln -s '${input_file}' 'read_dir/${identifier}' &&
 	    	#end for
             	sed -i "s|^DIR_SITES =.*|DIR_SITES = `pwd`/read_dir|g" configfile &&
 	    #end if
@@ -27,16 +28,18 @@
 	    ### cat seqlist - data preparation  &&
 	    #if $inputs.input_type == 'single':
 	    	#for $input in $inputs.single_seq
-	    	   ln -fs '$input' $input.element_identifier &&
-	    	   echo `pwd`/$input.element_identifier >> seqlist &&
-		   echo `pwd`/$input.element_identifier > '$input.element_identifier'.list &&
+		   #set $identifier = re.sub('[^\w\-_\.]', '_', $input.element_identifier)
+	    	   ln -fs '$input' '${identifier}' &&
+	    	   echo `pwd`/'${identifier}' >> seqlist &&
+	    	   echo `pwd`/'${identifier}' > '${identifier}'.list &&
 	    	#end for
 		sort seqlist > sorted_seqlist &&
 	    #elif $inputs.input_type == 'multiple':
 	    	#for $i,$input in enumerate($inputs.multiple_seq)
+		    #set $identifier = re.sub('[^\w\-_\.]', '_', $input.element_identifier)
 	    	    ln -fs '$input' $input.element_identifier &&
-	    	    echo `pwd`/$input.element_identifier >> seqlist && 
-		    echo `pwd`/$input.element_identifier > '$input.element_identifier'.list &&
+	    	    echo `pwd`/${identifier} >> seqlist && 
+	    	    echo `pwd`/${identifier} > '${identifier}'.list &&
 	    	#end for
                 sort seqlist > sorted_seqlist &&
 	    #end if
@@ -107,7 +110,7 @@ INTRONIC_GENES = ${intronic_genes}
              ]]></configfile>
     </configfiles>
     <inputs>
-		<expand macro="acknowledgement"/>
+	    <expand macro="acknowledgement"/>
 	    <conditional name="inputs">
                 <param name="input_type" type="select" label="Input type" help="Select single sequence or collection of sequence">
 			<option value="single" selected="true">Single sequence</option>
