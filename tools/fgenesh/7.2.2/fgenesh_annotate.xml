@@ -6,6 +6,7 @@
     <expand macro="requirements" />
     <expand macro="stdio" />
     <command><![CDATA[
+	    #import re
 	    mkdir -p result &&
 	    mkdir -p output_gff &&
 	    BLAST_PATH=\$(which blastp) > configfile &&
