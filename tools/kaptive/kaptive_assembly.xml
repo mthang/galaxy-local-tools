@@ -1,0 +1,231 @@
+<tool id="kaptive_assembly" name="Kaptive 3: Assembly" version="@TOOL_VERSION@+galaxy0" profile="@PROFILE@">
+    <description>K/O loci typing from genome assemblies</description>
+    <macros>
+          <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements"/>
+    <command detect_errors="exit_code"><![CDATA[
+	#import re
+
+	#if $formats.output_type == "directory":
+        	#set $output_path = "fasta_output"
+        	mkdir -p '$output_path' &&
+    	#elif $formats.output_type == "single_file":
+        	#set $output_path = "kaptive_results.fasta"
+    	#end if
+
+	#set $assembly_fasta = []
+        #for $fasta in $input_fasta:
+	     #set $safename = re.sub('[^\w\-_\.]', '_', $fasta.element_identifier) 
+	     ln -s '$fasta' '${safename}' &&
+	    #silent $assembly_fasta.append($safename)
+        #end for
+
+        kaptive assembly 
+	    '$db'
+	    #for $fa in $assembly_fasta:
+	    	${fa}
+	    #end for
+	    #if $formats.output_type == "single_file":
+                --fasta '$output_path'
+            #elif $formats.output_type == "directory":
+                --fasta '$output_path'
+            #end if	    
+            --out '$tabular_results'
+            #if $json_output:
+                --json '$json_results'
+            #end if
+            --min-cov $advanced.min_cov
+            --score-metric $advanced.score_metric
+            --weight-metric $advanced.weight_metric
+            --n-best $advanced.n_best
+            --max-other-genes $advanced.max_other_genes
+	    --percent-expected $advanced.percent_expected
+	    --gene-threshold $advanced.gene_threshold 
+	    #if str($advanced.below_threshold) == "true":
+                --below-threshold $advanced.below_threshold
+	    #end if
+	    &&
+            2>&1
+    ]]></command>
+    <inputs>
+        <param name="db" type="data" format="genbank" label="Kaptive Database" help="The Kaptive database archive." />
+        <param name="input_fasta" type="data" format="fasta,fasta.gz,fasta.bz2"  multiple="true" label="Assembly Fasta" />
+
+        <!-- Formats section with multiple select -->
+        <section name="formats" title="Output Formats" expanded="true">
+            <param name="output_type" type="select" label="Output type">
+                <option value="single_file">Single combined fasta file</option>
+                <option value="directory">Multiple fasta files in a collection</option>
+            </param>
+	</section>
+
+        <section name="advanced" title="Advanced Scoring Options">
+            <param name="min_cov" type="float" value="50.0" label="Minimum gene %coverage" help="Minimum gene %coverage (blen/q_len*100) to be used for scoring (default: 50.0)"/>
+            <param name="score_metric" type="select" label="Score metric" help="Metric for scoring each locus (default: 0)">
+                <option value="0" selected="true">AS (alignment score)</option>
+                <option value="1">mlen (matching bases)</option>
+                <option value="2">blen (aligned bases)</option>
+                <option value="3">q_len (query length)</option>
+            </param>
+            <param name="weight_metric" type="select" label="Weighting metric" help="Weighting for the 1st stage of the scoring algorithm (default: 3)">
+                <option value="0">No weighting</option>
+                <option value="1">Number of genes found</option>
+                <option value="2">Number of genes expected</option>
+                <option value="3" selected="true">Proportion of genes found</option>
+                <option value="4">blen</option>
+                <option value="5">q_len</option>
+	    </param>
+	    <param name="gene_threshold" type="integer" optional="true" min="0" max="100" value="80" label="Gene threshold"
+		    help="Species-level gene identity threshold"/>
+            <param name="n_best" type="integer" value="2" label="Number of best loci to align" help="Number of best loci from the 1st round of scoring to be fully aligned to the assembly (default: 2)"/>
+            <param name="max_other_genes" type="integer" value="1" label="Max other genes" help="Typeable if less than or equal to  other genes (default: 1)" />
+            <param name="percent_expected" type="integer" value="50" label="Min % expected genes" help="Typeable if greater than or equal to % expected genes (default: 50)" />
+            <param name="below_threshold" type="boolean" truevalue="true" falsevalue="" checked="false" label="Allow below threshold" help="Typeable if any genes are below threshold (default: False)" />
+        </section>
+
+        <param name="json_output" type="boolean" truevalue="True" falsevalue="False" checked="False" label="Generate JSON output" />
+    </inputs>
+    <outputs>
+	<data name="tabular_results" format="tabular" label="${tool.name} on ${on_string}: Results" />
+        <data name="json_results" format="json" label="${tool.name} on ${on_string}: JSON" >
+            <filter>json_output</filter>
+        </data>
+        <data name="fasta_single" format="fasta" label="${tool.name} on ${on_string}: Fasta" from_work_dir="kaptive_results.fasta">
+            <filter>formats['output_type'] == "single_file"</filter>
+        </data>
+        <collection name="fasta_collection" type="list" label="${tool.name} on ${on_string}: Fasta Collection">
+            <filter>formats['output_type'] == "directory"</filter>
+            <discover_datasets pattern="(?P&lt;designation&gt;.+)\.(?P&lt;ext&gt;fna)" format="fasta" directory="fasta_output" />
+        </collection>
+    </outputs>
+   <tests>
+        <!-- Test 1: Single fasta file output  -->
+        <test>
+	    <param name="db" value="9lps.gbk" ftype="genbank"/>
+	    <param name="input_fasta" value="L7_P1581_H8.fasta,L8_P2723_H16.fasta,L9_Past29_LPS.fasta" ftype="fasta"/>
+	    <param name="output_type" value="single_file"/>
+	    <param name="min_cov" value="50.0" />
+	    <param name="score_metric" value="0" />
+	    <param name="weight_metric" value="3" />
+	    <param name="gene_threshold" value="80" />
+	    <param name="n_best" value="2" />
+	    <param name="max_other_genes" value="1" />
+	    <param name="percent_expected" value="50" />
+	    <param name="below_threshold" value="false" />
+	    <param name="json_output" value="True" />
+	    <output name="L7_L8_L9_tabular" file="L7_L8_L9_tabular.txt" ftype="tabular" >
+		<assert_contents>
+		    <has_n_lines n="4"/>
+		    <has_size value="1515"/>
+		    <has_text text="LPS7-H8_01_rpl31_2"/>
+		    <has_text text="LPS8-H16_01_gatM"/>
+		    <has_text text="LPS9-Past29_01_hptE"/>
+                </assert_contents>
+	    </output>
+	    <output name="L7_L8_L9_json" file="L7_L8_L9_json.json" ftype="json" compare="sim_size" delta_frac="0.05" >
+	        <assert_contents>
+		    <has_n_lines n="3"/>
+		    <has_size value="52547" delta="100"/>
+		    <has_text text="LPS7-H8_06_ppgA"/>
+		    <has_text text="LPS8-H16_01_gatM"/>
+		    <has_text text="LPS8-H16_02_rpl31_2"/>
+		    <has_text text="LPS9-Past29_03_rpmE"/>
+                </assert_contents>
+	    </output>
+            <output name="kaptive_results" value="kaptive_results.fasta" ftype="fasta">
+ 		<assert_contents>
+			<has_size value="21009"/>
+ 			<has_line_matching expression="^>.*"/>
+			<has_line_matching expression="^[ACGTN]+$"/>
+		</assert_contents>
+	    </output>
+        </test>
+        <!-- Test 2: Multiple fasta file output in a directory-->
+        <test>
+		<param name="db" value="9lps.gbk" ftype="genbank" />
+		<param name="input_fasta" value="L7_P1581_H8.fasta,L8_P2723_H16.fasta,L9_Past29_LPS.fasta" ftype="fasta"/>
+		<param name="output_type" value="directory"/>
+            	<param name="min_cov" value="50.0" />
+            	<param name="score_metric" value="0" />
+            	<param name="weight_metric" value="3" />
+            	<param name="gene_threshold" value="80" />
+            	<param name="n_best" value="2" />
+            	<param name="max_other_genes" value="1" />
+            	<param name="percent_expected" value="50" />
+            	<param name="below_threshold" value="false" />
+                <output_collection name="fasta_collection" type="list">
+                         <element name="L7_P1581_H8_kaptive_results" file="L7_P1581_H8_kaptive_results.fna">
+                                 <assert_contents>
+                                         <has_size value="6989" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="L7_P1581_H8"/>
+                                 </assert_contents>
+			 </element>
+                        <element name="L8_P2723_H16_kaptive_results" file="L8_P2723_H16_kaptive_results.fna">
+                                 <assert_contents>
+                                         <has_size value="7091" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="L8_P2723_H16"/>
+                                 </assert_contents>
+                         </element>
+                        <element name="L9_Past29_LPS_kaptive_results" file="L9_Past29_LPS_kaptive_results.fna">
+                                 <assert_contents>
+                                         <has_size value="6929" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="L9_Past29_LPS"/>
+                                 </assert_contents>
+                         </element>
+		</output_collection>
+	</test>
+   </tests>
+    <help><![CDATA[
+**Kaptive Assembly Tool**
+
+This tool types bacterial assemblies using a Kaptive database, performing locus identification and typing.
+
+**Inputs:**
+
+- **Database path or keyword**: Path to the Kaptive database directory or a predefined keyword
+- **Assembly files**: One or more assemblies in FASTA format (.fasta, .fasta.gz, .fasta.xz, .fasta.bz2)
+
+**Output Options:**
+
+- **Tabular results (-o)**: Output file to write/append tabular results to
+- **FASTA output (-f)**: Turn on FASTA output for sequences
+- **JSON lines output (-j)**: Turn on JSON lines output
+- **Score matrix output (-s)**: Dump locus score matrix to TSV (typing will not be performed!)
+- **Plot results (-p)**: Generate plots of results
+- **Plot format (--plot-fmt)**: Choose between PNG or SVG for plots
+- **Suppress header (--no-header)**: Suppress header line in output
+
+**Scoring Options:**
+
+- **Minimum coverage (--min-cov)**: Minimum gene %coverage to be used for scoring (default: 50.0)
+- **Score metric (--score-metric)**: Metric for scoring each locus
+  - 0: AS (alignment score of genes found)
+  - 1: mlen (matching bases of genes found)
+  - 2: blen (aligned bases of genes found)
+  - 3: q_len (query length of genes found)
+- **Weight metric (--weight-metric)**: Weighting for the 1st stage of scoring
+  - 0: No weighting
+  - 1: Number of genes found
+  - 2: Number of genes expected
+  - 3: Proportion of genes found
+  - 4: blen (aligned bases of genes found)
+  - 5: q_len (query length of genes found)
+- **Number of best loci (--n-best)**: Number of best loci from 1st scoring round to fully align (default: 2)
+
+**Confidence Options:**
+
+- **Gene threshold (--gene-threshold)**: Species-level gene identity threshold. (i.e Klebsiella K locus - 82.5%, Klebsiella O locus - 82.5%, A.baumannii K locus - 85%, A.baumannii OC locus - 85%)
+- **Maximum other genes (--max-other-genes)**: Typeable if <= other genes (default: 1)
+- **Percent expected (--percent-expected)**: Typeable if >= % expected genes (default: 50)
+- **Below threshold (--below-threshold)**: Typeable if any genes are below threshold (default: False)
+	    
+   ]]></help>
+	<expand macro="citations"/>
+</tool>

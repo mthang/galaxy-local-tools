@@ -1,0 +1,396 @@
+<tool id="kaptive_extract" name="Kaptive 3: Extract Features from Database" version="@TOOL_VERSION@+galaxy0" profile="@PROFILE@">
+    <description>Extract loci, genes, or metadata from Kaptive database in various formats</description>
+    <macros>
+          <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements"/>
+    <command detect_errors="exit_code"><![CDATA[
+    #if $output_type == "directory"
+        #set $output_path = "kaptive_output"
+        mkdir -p '$output_path' &&
+    #else
+        #set $output_path = "kaptive_output"
+        #set $fna_output = "kaptive_output.fna"
+        #set $ffn_output = "kaptive_output.ffn"
+        #set $faa_output = "kaptive_output.faa"
+    #end if
+
+    kaptive extract
+        '$db'
+        #if $formats.output_type == "directory"
+            #if 'fna' in $formats.output_format:
+                --fna '$output_path'
+            #end if
+            #if 'ffn' in $formats.output_format:
+                --ffn '$output_path'
+            #end if
+            #if 'faa' in $formats.output_format:
+                --faa '$output_path'
+            #end if
+        #else
+            #if 'fna' in $formats.output_format:
+                --fna '$fna_output'
+            #end if
+            #if 'ffn' in $formats.output_format:
+                --ffn '$ffn_output'
+            #end if
+            #if 'faa' in $formats.output_format:
+                --faa '$faa_output'
+            #end if
+	#end if
+	&&
+        2>&1
+    ]]></command>
+    
+    <inputs>
+	<!-- Database input -->
+	<param type="data" name="db" format="genbank" label="Database path or keyword"
+               help="Path to the Kaptive database directory or a predefined keyword"/>
+        
+        <!-- Formats section with multiple select -->
+	<section name="formats" title="Output Formats" expanded="true">
+            <param name="output_type" type="select" label="Output type">
+                <option value="single_file">Single combined fasta file</option>
+                <option value="directory">Multiple fasta files in a collection</option>
+            </param>
+		
+            <param name="output_format" type="select" multiple="true" label="Extract locus sequences">
+                <option value="fna">Locus nucleotide sequences (FASTA)</option>
+                <option value="ffn">Locus gene nucleotide sequences (FASTA)</option>
+                <option value="faa">Locus gene protein sequences (FASTA)</option>
+            </param>    
+        </section>
+        
+    </inputs>
+    
+<outputs>
+    <!-- For single file output -->
+    <data name="output_fna" format="fasta" label="${tool.name} on ${on_string}: Locus nucleotide sequences" from_work_dir="kaptive_output.fna">
+        <filter>('fna' in formats["output_format"] and formats["output_type"] == "single_file")</filter>
+    </data>
+    
+    <data name="output_ffn" format="fasta" label="${tool.name} on ${on_string}: Locus gene nucleotide sequences" from_work_dir="kaptive_output.ffn">
+        <filter>('ffn' in formats["output_format"] and formats["output_type"] == "single_file")</filter>
+    </data>
+    
+    <data name="output_faa" format="fasta" label="${tool.name} on ${on_string}: Locus gene protein sequences" from_work_dir="kaptive_output.faa">
+        <filter>('faa' in formats["output_format"] and formats["output_type"] == "single_file")</filter>
+    </data>
+
+    <!-- For directory output - each as a collection -->
+    <collection name="output_dir_fna" type="list" label="${tool.name} on ${on_string}: Locus nucleotide sequences (directory)">
+        <filter>('fna' in formats["output_format"] and formats["output_type"] == "directory")</filter>
+	<discover_datasets pattern="(?P&lt;designation&gt;.+)\.(?P&lt;ext&gt;fna)" directory="kaptive_output" format="fasta" visible="false" />
+    </collection>
+    
+    <collection name="output_dir_ffn" type="list" label="${tool.name} on ${on_string}: Locus gene nucleotide sequences (directory)">
+        <filter>('ffn' in formats["output_format"] and formats["output_type"] == "directory")</filter>
+        <discover_datasets pattern="(?P&lt;designation&gt;.+)\.(?P&lt;ext&gt;ffn)" directory="kaptive_output" format="fasta" visible="false" />
+    </collection>
+    
+    <collection name="output_dir_faa" type="list" label="${tool.name} on ${on_string}: Locus gene protein sequences (directory)">
+        <filter>('faa' in formats["output_format"] and formats["output_type"] == "directory")</filter>
+        <discover_datasets pattern="(?P&lt;designation&gt;.+)\.(?P&lt;ext&gt;faa)" directory="kaptive_output" format="fasta" visible="false" />
+    </collection>
+</outputs>
+   <tests>
+	<!-- Test 1: Single file output with fna only -->	
+        <test>
+            <param name="db" value="9lps.gbk" ftype="genbank"/>
+            <param name="output_type" value="single_file"/>
+	    <param name="output_format" value="fna"/>
+            <output name="9lps" value="9lps.fna" ftype="fasta">
+			<assert_contents>
+				<has_size value="66761"/>
+				<has_line_matching expression="^>.*"/>
+				<has_line_matching expression="^[ACGTN]+$"/>
+			</assert_contents>
+	    </output>
+	</test>
+        <!-- Test 2: Single file output with fna only -->
+        <test>
+            <param name="db" value="9lps.gbk" ftype="genbank"/>
+            <param name="output_type" value="single_file"/>
+            <param name="output_format" value="ffn"/>
+            <output name="9lps" value="9lps.ffn" ftype="fasta">
+                        <assert_contents>
+                                <has_size value="58491"/>
+                                <has_line_matching expression="^>.*"/>
+                                <has_line_matching expression="^[ACGTN]+$"/>
+                        </assert_contents>
+	    </output>
+	</test>
+        <!-- Test 3: Single file output with fna only -->
+        <test>
+            <param name="db" value="9lps.gbk" ftype="genbank"/>
+            <param name="output_type" value="single_file"/>
+            <param name="output_format" value="faa"/>
+            <output name="9lps" value="9lps.faa" ftype="fasta">
+                        <assert_contents>
+                                <has_size value="20329"/>
+                                <has_line_matching expression="^>.*"/>
+                                <has_text text="MKQGIHPNYVEVTATCSCGNVIKTRSTVGKDLNLDVCGNCHPFYTGKQRVVDTGGRVERFNKRFNIPSTK*"/>
+                        </assert_contents>
+            </output>
+    	</test>
+        <!-- Test 4: directory output with fna only -->
+        <test>
+		<param name="db" value="9lps.gbk" ftype="genbank" />
+		<param name="output_type" value="directory"/>
+		<param name="output_format" value="fna"/>
+		<output_collection name="output_dir_fna" type="list">
+                         <element name="LPS1-H1" file="LPS1-H1.fna">
+                                 <assert_contents>
+                                         <has_size value="5583" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+	 				 <has_text text="LPS1-H1"/>
+                                 </assert_contents>
+                          </element>
+                          <element name="LPS2-H2" file="LPS2-H2.fna" >
+                                 <assert_contents>
+                                         <has_size value="4897" delta="100"/>
+					 <has_n_lines n="2"/>
+					 <has_line_matching expression="^>.*"/>
+					 <has_text text="LPS2-H2" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS3-Pm70" file="LPS3-Pm70.fna" >
+                                  <assert_contents>
+ 					 <has_size value="6462" delta="100"/>
+					 <has_n_lines n="2"/>
+					 <has_line_matching expression="^>.*"/>
+					 <has_text text="LPS3-Pm70" />
+ 				  </assert_contents>
+ 			   </element>
+ 			   <element name="LPS4-H6" file="LPS4-H6.fna" >
+ 				   <assert_contents>
+ 					 <has_size value="6975" delta="100"/>
+ 					 <has_n_lines n="2"/>
+  					 <has_line_matching expression="^>.*"/>
+					 <has_text text="LPS4-H6" />
+                                   </assert_contents>
+			   </element>
+                         <element name="LPS5-H9" file="LPS5-H9.fna" >
+                                 <assert_contents>
+                                         <has_size value="14330" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS5-H9"/>
+                                 </assert_contents>
+                          </element>
+                          <element name="LPS6-H12" file="LPS6-H12.fna" >
+                                 <assert_contents>
+                                         <has_size value="7578" delta="200"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS6-H12" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS7-H8" file="LPS7-H8.fna" >
+                                  <assert_contents>
+                                         <has_size value="6965" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS7-H8" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS8-H16" file="LPS8-H16.fna" >
+                                   <assert_contents>
+                                         <has_size value="7066" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS8-H16" />
+                                   </assert_contents>
+                           </element>
+                           <element name="LPS9-Past29" file="LPS9-Past29.fna" >
+                                   <assert_contents>
+                                         <has_size value="6905" delta="100"/>
+                                         <has_n_lines n="2"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS9-Past29" />
+                                   </assert_contents>
+                           </element>
+		</output_collection>
+	 </test>
+       <!-- Test 5: directory output with fna only -->
+        <test>
+                <param name="db" value="9lps.gbk" ftype="genbank" />
+                <param name="output_type" value="directory"/>
+                <param name="output_format" value="ffn"/>
+                <output_collection name="output_dir_ffn" type="list">
+                         <element name="LPS1-H1" file="LPS1-H1.ffn">
+                                 <assert_contents>
+                                         <has_size value="5298" delta="100"/>
+                                         <has_n_lines n="14"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS1-H1"/>
+                                 </assert_contents>
+                          </element>
+                          <element name="LPS2-H2" file="LPS2-H2.ffn" >
+                                 <assert_contents>
+                                         <has_size value="4075" delta="100"/>
+                                         <has_n_lines n="10"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS2-H2" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS3-Pm70" file="LPS3-Pm70.ffn" >
+                                  <assert_contents>
+                                         <has_size value="5994" delta="100"/>
+                                         <has_n_lines n="14"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS3-Pm70" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS4-H6" file="LPS4-H6.ffn" >
+                                   <assert_contents>
+                                         <has_size value="6030" delta="100"/>
+                                         <has_n_lines n="12"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS4-H6" />
+                                   </assert_contents>
+                           </element>
+                         <element name="LPS5-H9" file="LPS5-H9.ffn" >
+                                 <assert_contents>
+                                         <has_size value="12689" delta="100"/>
+                                         <has_n_lines n="26"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS5-H9"/>
+                                 </assert_contents>
+                          </element>
+                          <element name="LPS6-H12" file="LPS6-H12.ffn" >
+                                 <assert_contents>
+                                         <has_size value="7022" delta="200"/>
+                                         <has_n_lines n="16"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS6-H12" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS7-H8" file="LPS7-H8.ffn" >
+                                  <assert_contents>
+                                         <has_size value="6756" delta="100"/>
+                                         <has_n_lines n="16"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS7-H8" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS8-H16" file="LPS8-H16.ffn" >
+                                   <assert_contents>
+                                         <has_size value="4953" delta="100"/>
+                                         <has_n_lines n="12"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS8-H16" />
+                                   </assert_contents>
+                           </element>
+                           <element name="LPS9-Past29" file="LPS9-Past29.ffn" >
+                                   <assert_contents>
+                                         <has_size value="5674" delta="100"/>
+                                         <has_n_lines n="14"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS9-Past29" />
+                                   </assert_contents>
+                           </element>
+                </output_collection>
+         </test>
+       <!-- Test 6: directory output with fna only -->
+        <test>
+                <param name="db" value="9lps.gbk" ftype="genbank" />
+                <param name="output_type" value="directory"/>
+                <param name="output_format" value="faa"/>
+                <output_collection name="output_dir_faa" type="list">
+                         <element name="LPS1-H1" file="LPS1-H1.faa">
+                                 <assert_contents>
+                                         <has_size value="1852" delta="100"/>
+                                         <has_n_lines n="14"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS1-H1"/>
+                                 </assert_contents>
+                          </element>
+                          <element name="LPS2-H2" file="LPS2-H2.faa" >
+                                 <assert_contents>
+                                         <has_size value="1419" delta="100"/>
+                                         <has_n_lines n="10"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS2-H2" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS3-Pm70" file="LPS3-Pm70.faa" >
+                                  <assert_contents>
+                                         <has_size value="2088" delta="100"/>
+                                         <has_n_lines n="14"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS3-Pm70" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS4-H6" file="LPS4-H6.faa" >
+                                   <assert_contents>
+                                         <has_size value="2084" delta="100"/>
+                                         <has_n_lines n="12"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS4-H6" />
+                                   </assert_contents>
+                           </element>
+                         <element name="LPS5-H9" file="LPS5-H9.faa" >
+                                 <assert_contents>
+                                         <has_size value="4381" delta="100"/>
+                                         <has_n_lines n="26"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS5-H9"/>
+                                 </assert_contents>
+                          </element>
+                          <element name="LPS6-H12" file="LPS6-H12.faa" >
+                                 <assert_contents>
+                                         <has_size value="2442" delta="200"/>
+                                         <has_n_lines n="16"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS6-H12" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS7-H8" file="LPS7-H8.faa" >
+                                  <assert_contents>
+                                         <has_size value="2350" delta="100"/>
+                                         <has_n_lines n="16"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS7-H8" />
+                                  </assert_contents>
+                           </element>
+                           <element name="LPS8-H16" file="LPS8-H16.faa" >
+                                   <assert_contents>
+                                         <has_size value="1729" delta="100"/>
+                                         <has_n_lines n="12"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS8-H16" />
+                                   </assert_contents>
+                           </element>
+                           <element name="LPS9-Past29" file="LPS9-Past29.faa" >
+                                   <assert_contents>
+                                         <has_size value="1984" delta="100"/>
+                                         <has_n_lines n="14"/>
+                                         <has_line_matching expression="^>.*"/>
+                                         <has_text text="LPS9-Past29" />
+                                   </assert_contents>
+                           </element>
+                </output_collection>
+         </test>
+    </tests>
+    <help><![CDATA[
+**Kaptive Extract Tool**
+
+This tool extracts locus sequences from a Kaptive database in various formats.
+
+**Inputs:**
+
+- **Database path or keyword**: Path to the Kaptive database directory or a predefined keyword
+
+**Output Formats:**
+
+- **Locus nucleotide sequences (--fna)**: Convert to locus nucleotide sequences in FASTA format
+- **Locus gene nucleotide sequences (--ffn)**: Convert to locus gene nucleotide sequences in FASTA format  
+- **Locus gene protein sequences (--faa)**: Convert to locus gene protein sequences in FASTA format
+
+    ]]></help>
+	
+	<expand macro="citations"/>
+
+</tool>
