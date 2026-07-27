@@ -1,0 +1,23 @@
+---
+auto_tool_repositories:
+  name_template: "{{ tool_id }}"
+  description_template: "{{ tool_name }} from the kaptive3 suite"
+categories:
+  - Sequence Analysis
+description: Kaptive is a system for surface polysaccharide typing from bacterial genome sequence.
+exclude:
+  - tool_test_output.html
+  - tool_test_output.json
+homepage_url: https://github.com/klebgenomics/Kaptive
+long_description: >
+  Kaptive is a system for surface polysaccharide typing from bacterial genome sequence.
+name: kaptive
+owner: galaxy-australia
+remote_repository_url: https://github.com/usegalaxy-au/tools-au/tree/master/tools/kaptive
+suite:
+  name: suite_kaptive
+  description: >
+    Kaptive is a system for surface polysaccharide typing from bacterial genome sequence.
+  long_description: >
+    Kaptive is a system for surface polysaccharide typing from bacterial genome sequence.    
+type: unrestricted
