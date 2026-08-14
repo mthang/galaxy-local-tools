@@ -1,0 +1,117 @@
+<?xml version="1.0"?>
+<tool id="sylph_tax_merge" name="sylph-tax merge" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@">
+    <description>Merge sylphmpa profiles into a single table</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements" />
+    <expand macro="version" />
+    <command detect_errors="exit_code"><![CDATA[
+## Validate all inputs
+#for $input in $sylphmpa_files
+  #set header_line = None
+  #for $line in open(str($input))
+    #if not str($line).startswith('#')
+      #set header_line = str($line).strip()
+      #break
+    #end if
+  #end for#
+  
+  #if 'ANI (if strain-level)' not in header_line or 'Coverage (if strain-level)' not in header_line#
+    >&2 echo "ERROR: missing required strain-level columns (ANI/Coverage).";
+    exit 1;
+  #end if
+#end for
+
+sylph-tax merge
+#for $f in $sylphmpa_files
+    '$f'
+#end for
+    --column '$column'
+    -o '$output'
+    ]]></command>
+    <inputs>
+        <param name="sylphmpa_files" type="data" format="tabular" multiple="true" min="1" label="Sylphmpa profile files" help=".sylphmpa output files from sylph-tax taxprof" />
+        <param name="column" type="select" label="Output column" help="The data type to extract into the merged table">
+            <option value="relative_abundance" selected="true">Relative abundance</option>
+            <option value="sequence_abundance">Sequence abundance</option>
+            <option value="ANI">ANI</option>
+            <option value="Coverage">Coverage</option>
+        </param>
+    </inputs>
+    <outputs>
+        <data name="output" format="tabular" label="${tool.name} on ${on_string}: merged table" />
+    </outputs>
+    <tests>
+        <test expect_num_outputs="1">
+            <param name="sylphmpa_files" value="sample1.sylphmpa,sample2.sylphmpa" />
+            <param name="column" value="relative_abundance" />
+            <output name="output" ftype="tabular">
+                <assert_contents>
+                    <has_text_matching expression="clade_name" />
+                    <has_text_matching expression="sample1\.fa\.gz" />
+                    <has_text_matching expression="sample2\.fa\.gz" />
+		    <has_text_matching expression="d__Bacteria;p__Pseudomonadota" />
+		    <has_text_matching expression="78\.1242" />
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="1">
+            <param name="sylphmpa_files" value="sample1.sylphmpa,sample2.sylphmpa" />
+            <param name="column" value="sequence_abundance" />
+            <output name="output" ftype="tabular">
+		<assert_contents>
+                    <has_text_matching expression="clade_name" />
+                    <has_text_matching expression="sample1\.fa\.gz" />
+                    <has_text_matching expression="sample2\.fa\.gz" />
+                    <has_text_matching expression="d__Bacteria;p__Bacillota" />
+                    <has_text_matching expression="18\.1766" />
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="1">
+            <param name="sylphmpa_files" value="sample1.sylphmpa,sample2.sylphmpa" />
+            <param name="column" value="Coverage" />
+            <output name="output" ftype="tabular">
+                <assert_contents>
+                    <has_text_matching expression="clade_name" />
+                    <has_text_matching expression="sample1\.fa\.gz" />
+                    <has_text_matching expression="sample2\.fa\.gz" />
+                    <has_text_matching expression="d__Bacteria;p__Pseudomonadota" />
+                    <has_text_matching expression="264\.0" />
+                    <has_text_matching expression="300\.0" />
+                </assert_contents>
+            </output>
+        </test>
+        <test expect_num_outputs="1">
+            <param name="sylphmpa_files" value="sample1.sylphmpa,sample2.sylphmpa" />
+            <param name="column" value="ANI" />
+            <output name="output" ftype="tabular">
+	       <assert_contents>
+                    <has_text_matching expression="clade_name" />
+                    <has_text_matching expression="sample1\.fa\.gz" />
+                    <has_text_matching expression="sample2\.fa\.gz" />
+                    <has_text_matching expression="d__Bacteria;p__Pseudomonadota" />
+		    <has_text_matching expression="97\.53" />
+		    <has_text_matching expression="98\.0" />
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+<help><![CDATA[
+**sylph-tax merge** combines multiple `.sylphmpa` taxonomic profiles into a single TSV table.
+
+**Input**
+- One or more `.sylphmpa` files produced by ``sylph-tax taxprof``.
+
+**Options**
+- **Output column**: Choose which value to merge into the table: ``relative_abundance`` (default), ``sequence_abundance``, ``ANI``, or ``Coverage``.
+
+**Output**
+- A single TSV table with clades as rows and samples as columns.
+]]></help>
+
+    <citations>
+        <citation type="doi">10.1038/s41587-024-02412-y</citation>
+    </citations>
+</tool>

@@ -1,0 +1,4 @@
+#This is a sample file distributed with Galaxy that enables tools
+#to use a directory of metagenomics files.  
+#file has this format (white space characters are TAB characters)
+sylph_tax_db	Sylph Database needed for running Sylp-tax taxprof(2026)	/home/mthang/galaxy_24.1/tools/sylph_tax/metadata

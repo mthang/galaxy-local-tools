@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<tables>
+    <table name="sylph_tax_db" comment_char="#">
+        <columns>value, name, path</columns>
+        <file path="tool-data/sylph_tax_db.loc"/>
+    </table>
+</tables>

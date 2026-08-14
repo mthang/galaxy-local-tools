@@ -1,0 +1,194 @@
+<tool id="sylph_tax_taxprof" name="sylph-tax taxprof" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@">
+    <description>Generate taxonomic profiles from sylph output</description>
+    <macros>
+        <import>macros.xml</import>
+    </macros>
+    <expand macro="requirements" />
+    <expand macro="version" />
+    <command detect_errors="exit_code"><![CDATA[
+## sylph-tax --taxonomy-dir /home/mthang/galaxy_24.1/tools/sylph_tax/metadata taxprof tsv/*.tsv -t GTDB_r226 IMGVR_4.1 -o test/out_
+#import re
+#set $input_tsv_path = "input_dir"
+#set $output_path = "output_dir"
+#set $output_prefix = "taxprof_"
+	    
+mkdir -p '$input_tsv_path' &&
+mkdir -p '$output_path' &&
+
+#for $i in $sylph_profile_result
+    #set raw_name = str($i.element_identifier)
+    #set safe_name = re.sub('[^\w\-\.]', '_', raw_name)
+    ## Strip any existing extension, then force .tsv
+    #set base_name = re.sub('\.[^\.]+$', '', safe_name)
+    #set final_name = base_name + '.tsv'
+    ln -s '$i' '$input_tsv_path/${final_name}' &&
+#end for#
+
+
+sylph-tax --taxonomy-dir '$taxonomy_source.fields.path' 
+taxprof $input_tsv_path/*.tsv
+-t ${' '.join(map(str, $taxonomy_type))}
+$annotate_virus_hosts
+$pavian
+-o '$output_path/$output_prefix'
+&&
+2>&1
+    ]]></command>
+    <inputs>
+        <param name="sylph_profile_result" type="data_collection" collection_type="list" format="tabular" label="Sylph profiling results" help="TSV output from sylph profile" />
+	    
+        <param name="taxonomy_type" type="select" multiple="true" label="Taxonomy type" help="Select taxonomy type">
+            <option value="FungiRefSeq-latest">Eukaryote - RefSeq fungi representative genomes collected on 2025-10-11</option>
+            <option value="FungiRefSeq-2024-07-25">Eukaryote - (DEPRECATED) Refseq fungi representative genomes collected on 2024-07-25</option>
+            <option value="GTDB_r214">Prokaryote - GTDB-r214 (April 2023)</option>
+	    <option value="GTDB_r220">Prokaryote - GTDB-r220 (April 2024)</option>
+            <option value="GTDB_r226">Prokaryote - GTDB-r226 (April 2025)</option>
+	    <option value="GTDB_r232">Prokaryote - GTDB-r232 (April 2026)</option>
+	    <option value="OceanDNA">Prokaryote - OceanDNA - ocean MAGs </option>
+	    <option value="SoilSMAG">Prokaryote - Soil MAGs (SMAG) from Ma et al.</option>
+	    <option value="GlobDB_r226">Prokaryote - GlobDB-r226 - a massive prokaryotic genome/MAG catalog</option>
+            <option value="GlobDB_r232">Prokaryote - GlobDB-r232 - a massive prokaryotic genome/MAG catalog</option>
+            <option value="IMGVR_4.1">Virus - IMG/VR 4.1 high-confidence viral OTU genomes</option>
+            <option value="UHGV_default">Virus - Unified Human Gut Virus Catalog - UHGV taxonomy</option>
+            <option value="UHGV_ictv">Virus - Unified Human Gut Virus Catalog - ICTV-like taxonomy</option>
+	    <option value="TaraEukaryoticSMAG">Eukaryote - TARA eukaryotic SMAGs</option>
+    	</param>
+        <param name="taxonomy_source" type="select" label="Sylph Taxonomy database">
+            <options from_data_table="sylph_tax_db">
+		<filter type="sort_by" column="2"/>
+                <validator message="No indexes are available for the selected input dataset" type="no_options"/>
+	    </options>
+        </param>
+        <param name="annotate_virus_hosts" type="boolean" truevalue="-a" falsevalue="" label="Annotate virus hosts" help="Add viral-host information (IMGVR_4.1 only)" />
+        <param name="pavian" type="boolean" truevalue="--pavian" falsevalue="" label="Pavian-compatible output" help="Generate output compatible with Pavian visualization" />
+    </inputs>
+    <outputs>
+	<collection name="output" type="list" label="${tool.name} on ${on_string}: taxonomic profiles">    
+            <discover_datasets pattern="taxprof_(?P&lt;designation&gt;.*)\.sylphmpa" directory="output_dir" format="tabular" />
+        </collection>
+    </outputs>
+    <tests>
+        <!-- Multi input: k12 + o157 -->
+        <test expect_num_outputs="1">
+            <param name="sylph_profile_result">
+                 <collection type="list">
+                    <element name="k12_profile.tsv" value="k12_profile.tsv"/>
+                    <element name="o157_profile.tsv" value="o157_profile.tsv"/>
+                 </collection>
+            </param>
+	    <param name="taxonomy_type" value="GTDB_r226,IMGVR_4.1" />
+	    <param name="taxonomy_source" value="sylph_tax_db" />
+	    <output_collection name="output" type="list">
+		    <element name="k12" file="taxprof_k12.sylphmpa">
+                                 <assert_contents>
+                                         <has_size value="963" delta="100"/>
+					 <has_n_lines n="10"/>
+					 <has_text text="k12"/>
+					 <has_text_matching expression="#SampleID\tk12" />
+					 <has_text_matching expression="d__Bacteria" />
+					 <has_text_matching expression="Escherichia coli" />
+					 <has_text_matching expression="95\.09" />
+                                 </assert_contents>
+                     </element>
+                     <element name="o157" file="taxprof_o157.sylphmpa">
+                                 <assert_contents>
+                                         <has_size value="973" delta="100"/>
+					 <has_n_lines n="10"/>
+					 <has_text text="o157"/>
+                                         <has_text_matching expression="#SampleID\to157"/>
+					 <has_text_matching expression="d__Bacteria" />
+					 <has_text_matching expression="Escherichia coli" />
+					 <has_text_matching expression="97\.19" />
+                                 </assert_contents>
+                      </element>
+	    </output_collection>
+        </test>
+        <!-- Single input with Pavian output -->
+        <test expect_num_outputs="1">
+	    <param name="sylph_profile_result">
+                <collection type="list">
+                    <element name="k12_profile.tsv" value="k12_profile.tsv"/>
+                    <element name="o157_profile.tsv" value="o157_profile.tsv"/>
+                </collection>
+            </param>
+	    <param name="taxonomy_type" value="GTDB_r226,IMGVR_4.1"/>
+	    <param name="taxonomy_source" value="sylph_tax_db" />
+            <param name="pavian" value="true" />
+            <output_collection name="output" type="list">
+                    <element name="k12" file="pavian_k12.sylphmpa">
+                                 <assert_contents>
+                                         <has_size value="916" delta="100"/>
+                                         <has_n_lines n="10"/>
+                                         <has_text_matching expression="^#mpa_v3_sylphmock#SampleID\tk12" />
+                                         <has_text_matching expression="d__Bacteria" />
+                                         <has_text_matching expression="placeholder2" />
+                                         <has_text_matching expression="0\|0\|0\|0\|0\|0\|0\|0" />
+                                 </assert_contents>
+                     </element>
+                     <element name="o157" file="pavian_o157.sylphmpa">
+                                 <assert_contents>
+                                         <has_size value="926" delta="100"/>
+                                         <has_n_lines n="10"/>
+                                         <has_text_matching expression="^#mpa_v3_sylphmock#SampleID\to157"/>
+                                         <has_text_matching expression="d__Bacteria" />
+                                         <has_text_matching expression="Enterobacterales" />
+                                         <has_text_matching expression="0\|0\|0\|0\|0\|0\|0\|0" />
+                                 </assert_contents>
+                      </element>
+            </output_collection>
+        </test>
+	<test expect_num_outputs="1">
+            <param name="sylph_profile_result">
+                <collection type="list">
+                    <element name="k12_profile.tsv" value="k12_profile.tsv"/>
+                    <element name="o157_profile.tsv" value="o157_profile.tsv"/>
+                </collection>
+            </param>		
+            <param name="taxonomy_type" value="IMGVR_4.1" />
+            <param name="taxonomy_source" value="sylph_tax_db" />
+	    <param name="annotate_virus_hosts" value="true" />
+            <output_collection name="output" type="list">
+                    <element name="k12" file="host_k12.sylphmpa">
+                                 <assert_contents>
+                                         <has_size value="284" delta="100"/>
+                                         <has_n_lines n="4"/>
+                                         <has_text text="k12"/>
+                                         <has_text_matching expression="^#SampleID\tk12" />
+                                         <has_text_matching expression="GCF_003697165.2" />
+					 <has_text_matching expression="95\.09" />
+                                 </assert_contents>
+                     </element>
+                     <element name="o157" file="host_o157.sylphmpa">
+                                 <assert_contents>
+                                         <has_size value="285" delta="100"/>
+					 <has_n_lines n="4"/>
+					 <has_text text="o157"/>
+                                         <has_text_matching expression="^#SampleID\to157"/>
+					 <has_text_matching expression="NZ_CP033092.2" />
+					 <has_text_matching expression="97\.19" />
+                                 </assert_contents>
+                      </element>
+            </output_collection>
+        </test>
+    </tests>
+    <help><![CDATA[
+**sylph-tax taxprof** converts sylph metagenomic profiling output into taxonomic abundance profiles (`.sylphmpa`).
+
+**Input**
+- Sylph TSV output from ``sylph profile`` (one or more files).
+
+**Taxonomy**
+- Choose either a pre-built database (administered via the ``sylph_metadata`` data table) or upload custom taxonomy metadata.
+- Custom taxonomy must be a 2-column TSV: ``genome_filename`` and ``semicolon-delimited taxonomy string``.
+
+**Outputs**
+- One ``taxprof_<sample>.sylphmpa`` file per sample column in the input. These are discovered dynamically.
+
+**Notes**
+- Viral host annotation (``-a``) is currently only available for IMGVR_4.1.
+- Use ``--pavian`` for Pavian-compatible output.
+    ]]></help>
+    <citations>
+        <citation type="doi">10.1038/s41587-024-02412-y</citation>
+    </citations>
+</tool>
