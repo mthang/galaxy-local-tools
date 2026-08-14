@@ -1,0 +1,5 @@
+#SampleID	sample1.fa.gz
+clade_name	relative_abundance	sequence_abundance	ANI (if strain-level)	Coverage (if strain-level)
+d__Bacteria	100.0	100.0	96.50	100.0
+d__Bacteria;p__Pseudomonadota	78.1242	81.8234	97.53	264.0
+d__Bacteria;p__Bacillota	21.8758	18.1766	95.20	10.2

@@ -1,0 +1,23 @@
+---
+auto_tool_repositories:
+  name_template: "{{ tool_id }}"
+  description_template: "{{ tool_name }} from the sylph-tax suite"
+categories:
+  - Sequence Analysis
+description: sylph-tax turn sylph's TSV output into a taxonomic profile.
+exclude:
+  - tool_test_output.html
+  - tool_test_output.json
+homepage_url: https://github.com/bluenote-1577/sylph-tax
+long_description: >
+  sylph-tax turn sylph's TSV output into a taxonomic profile.
+name: kaptive
+owner: galaxy-australia
+remote_repository_url: https://github.com/usegalaxy-au/tools-au/tree/master/tools/sylph_tax
+suite:
+  name: suite_sylph_tax
+  description: >
+    sylph-tax turn sylph's TSV output into a taxonomic profile.
+  long_description: >
+    sylph-tax turn sylph's TSV output into a taxonomic profile.    
+type: unrestricted
