@@ -1,4 +1,5 @@
 #This is a sample file distributed with Galaxy that enables tools
 #to use a directory of metagenomics files.  
 #file has this format (white space characters are TAB characters)
-sylph_tax_db	Sylph Database needed for running Sylp-tax taxprof(2026)	/home/mthang/galaxy_24.1/tools/sylph_tax/metadata
+#sylph_tax_1.9.1	Files needed for running sylph-tax (1.9.1)	/path/to/data	1.9.1
+sylph_1.9.1-17082026	Files needed for running sylph-tax v-1.9.1-17082026	/tmp/tool-data/sylph_tax_db/sylph_tax_1.9.1	1.9.1
