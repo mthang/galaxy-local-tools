@@ -1,5 +1,5 @@
 name: data_manager_sylph_tax
-owner: galaxy_australia
+owner: galaxy-australia
 description: "Download Sylph-tax metadata database"
 homepage_url: "https://github.com/bluenote-1577/sylph-tax"
 long_description: |
