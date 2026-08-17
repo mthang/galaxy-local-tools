@@ -1,0 +1,66 @@
+<tool id="data_manager_sylph_tax_download" name="Download Sylph-tax metadata database" tool_type="manage_data" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@">
+    <description></description>
+    <macros>
+     <token name="@TOOL_VERSION@">1.9.1</token>
+     <token name="@VERSION_SUFFIX@">0</token>
+     <token name="@PROFILE@">24.1</token>
+    </macros>
+    <requirements>
+        <requirement type="package" version="@TOOL_VERSION@">sylph-tax</requirement>
+    </requirements>
+    <command detect_errors="exit_code">
+	<![CDATA[
+	mkdir -p '$out_file.extra_files_path' &&
+	sylph-tax --no-config download --download-to '$out_file.extra_files_path' &&
+	cp '$dmjson' '$out_file'
+        ]]>
+    </command>
+    <configfiles>   
+        <configfile name="dmjson"><![CDATA[
+#from datetime import date
+{
+  "data_tables":{
+    "sylph_tax":[
+      {
+        "value": "sylph-tax_$version-#echo date.today().strftime('%d%m%Y')#",
+        "name": "Files needed for running Sylph-tax v-$version-#echo date.today().strftime('%d%m%Y')#",
+	"path": "sylph-tax_$version",
+	"db_version" : "$version"
+      }
+    ]
+  }
+}]]>
+        </configfile>
+    </configfiles>    
+    <inputs>
+	<param name="version" type="select" label="DB version">
+            <option value="@TOOL_VERSION@" selected="true">Syplh-tax version</option>
+        </param>    
+    </inputs>
+    <outputs>
+        <data name="out_file" format="data_manager_json" label="${tool.name}" />
+    </outputs>
+    <tests>
+        <test expect_num_outputs="1">
+            <param name="version" value="1.9.1"/>
+            <output name="out_file">
+                <assert_contents>
+                    <has_text text="sylph-tax_1.9.1"/>
+                    <has_text_matching expression='"value": "sylph-tax_1.9.1-[0-9]{8}"'/>
+                    <has_text_matching expression='"name": "Files needed for running Sylph-tax v-1.9.1-[0-9]{8}"'/>
+                    <has_text text='"path": "sylph-tax_1.9.1"'/>
+                </assert_contents>
+            </output>
+        </test>
+    </tests>
+
+    <help><![CDATA[
+Download metadata necessary for running Sylph-tax. It is composed of the metadata database.
+    ]]>
+    </help>
+    
+    <citations>
+        <citation type="doi">10.1038/s41587-024-02412-y</citation>
+    </citations>
+</tool>
+

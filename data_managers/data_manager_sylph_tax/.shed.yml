@@ -1,0 +1,10 @@
+name: data_manager_sylph_tax
+owner: galaxy_australia
+description: "Download Sylph-tax metadata database"
+homepage_url: "https://github.com/bluenote-1577/sylph-tax"
+long_description: |
+    Data manager to download the metadata database needed for Sylph-tax to run datasets
+remote_repository_url: https://github.com/usegalaxy-au/tools-au/tree/master/data_managers/data_manager_sylph_tax
+type: unrestricted
+categories:
+- Data Managers
