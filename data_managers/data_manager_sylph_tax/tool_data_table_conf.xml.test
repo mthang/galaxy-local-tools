@@ -1,5 +1,5 @@
 <tables>
-    <table name="sylph_tax" comment_char="#">
+    <table name="sylph_tax_db" comment_char="#">
         <columns>value, name, path, db_version</columns>
         <file path="${__HERE__}/test-data/sylph_tax_db.loc.test"/>
     </table>
