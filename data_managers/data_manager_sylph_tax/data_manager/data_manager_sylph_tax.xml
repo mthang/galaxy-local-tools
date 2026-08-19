@@ -1,4 +1,4 @@
-<tool id="data_manager_sylph_tax_download" name="Download Sylph-tax metadata database" tool_type="manage_data" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@">
+<tool id="data_manager_sylph_tax_db" name="Download Sylph-tax metadata database" tool_type="manage_data" version="@TOOL_VERSION@+galaxy@VERSION_SUFFIX@" profile="@PROFILE@">
     <description></description>
     <macros>
      <token name="@TOOL_VERSION@">1.9.1</token>
@@ -20,7 +20,7 @@
 #from datetime import date
 {
   "data_tables":{
-    "sylph_tax":[
+    "sylph_tax_db":[
       {
         "value": "sylph-tax_$version-#echo date.today().strftime('%d%m%Y')#",
         "name": "Files needed for running Sylph-tax v-$version-#echo date.today().strftime('%d%m%Y')#",
@@ -34,7 +34,7 @@
     </configfiles>    
     <inputs>
 	<param name="version" type="select" label="DB version">
-            <option value="@TOOL_VERSION@" selected="true">Syplh-tax version</option>
+            <option value="@TOOL_VERSION@" selected="true">Sylph-tax 1.9.1</option>
         </param>    
     </inputs>
     <outputs>
@@ -45,10 +45,10 @@
             <param name="version" value="1.9.1"/>
             <output name="out_file">
                 <assert_contents>
-                    <has_text text="sylph-tax_1.9.1"/>
+                    <has_text text='"sylph_tax_db"':/>
                     <has_text_matching expression='"value": "sylph-tax_1.9.1-[0-9]{8}"'/>
                     <has_text_matching expression='"name": "Files needed for running Sylph-tax v-1.9.1-[0-9]{8}"'/>
-                    <has_text text='"path": "sylph-tax_1.9.1"'/>
+                    <has_text text='"path": "sylph-tax_@TOOL_VERSION@"'/>
                 </assert_contents>
             </output>
         </test>
