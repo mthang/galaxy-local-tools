@@ -3,4 +3,4 @@
 #file has this format (white space characters are TAB characters)
 ##The columns are:
 #value	name	path    version
-#sylph-tax_1.9.1	Files needed for running sylph-tax (1.9.1)	sylph-tax_1.9.1-20260813	/path/to/data	1.9.1
+#sylph-tax_1.9.1	Files needed for running sylph-tax (1.9.1)	sylph-tax_1.9.1-20260813	1.9.1
