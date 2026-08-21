@@ -22,9 +22,9 @@
   "data_tables":{
     "sylph_tax_db":[
       {
-        "value": "sylph-tax_$version-#echo date.today().strftime('%d%m%Y')#",
-        "name": "Files needed for running Sylph-tax v-$version-#echo date.today().strftime('%d%m%Y')#",
-	"path": "sylph-tax_$version",
+        "value": "sylph_tax_$version-#echo date.today().strftime('%d%m%Y')#",
+        "name": "Files needed for running Sylph-tax $version-#echo date.today().strftime('%d%m%Y')#",
+	"path": "sylph_tax_$version",
 	"db_version" : "$version"
       }
     ]
@@ -45,10 +45,10 @@
             <param name="version" value="1.9.1"/>
             <output name="out_file">
                 <assert_contents>
-                    <has_text text='"sylph_tax_db"':/>
-                    <has_text_matching expression='"value": "sylph-tax_1.9.1-[0-9]{8}"'/>
-                    <has_text_matching expression='"name": "Files needed for running Sylph-tax v-1.9.1-[0-9]{8}"'/>
-                    <has_text text='"path": "sylph-tax_@TOOL_VERSION@"'/>
+                    <has_text text='"sylph_tax_db":'/>
+                    <has_text_matching expression='"value": "sylph_tax_@TOOL_VERSION@-[0-9]{8}"'/>
+                    <has_text_matching expression='"name": "Files needed for running Sylph-tax @TOOL_VERSION@-[0-9]{8}"'/>
+                    <has_text text='"path": "sylph_tax_@TOOL_VERSION@"'/>
                 </assert_contents>
             </output>
         </test>
