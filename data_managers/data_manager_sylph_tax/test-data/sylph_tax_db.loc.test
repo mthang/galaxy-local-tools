@@ -3,3 +3,4 @@
 #file has this format (white space characters are TAB characters)
 #sylph_tax_1.9.1	Files needed for running sylph-tax (1.9.1)	sylph-tax_1.9.1-17082026	/path/to/data	1.9.1
 sylph_tax_1.9.1-21082026	Files needed for running Sylph-tax 1.9.1-21082026	/tmp/galaxy/tool-data/sylph_tax_db/sylph_tax_1.9.1	1.9.1
+sylph_tax_1.9.1-27082026	Files needed for running Sylph-tax 1.9.1-27082026	/home/mthang/galaxy_24.1/tool-data/sylph_tax_db/sylph_tax_1.9.1	1.9.1

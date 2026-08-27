@@ -10,8 +10,8 @@
     </requirements>
     <command detect_errors="exit_code">
 	<![CDATA[
-	mkdir -p '$out_file.extra_files_path' &&
-	sylph-tax --no-config download --download-to '$out_file.extra_files_path' &&
+	mkdir -p '$out_file.extra_files_path'/sylph_tax_db_@TOOL_VERSION@ &&
+	sylph-tax --no-config download --download-to '$out_file.extra_files_path'/sylph_tax_db_@TOOL_VERSION@ &&
 	cp '$dmjson' '$out_file'
         ]]>
     </command>
